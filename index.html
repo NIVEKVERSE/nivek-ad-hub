@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NIVEK | AD_HUB</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;500;700&display=swap');
+        body { font-family: 'Space Grotesk', sans-serif; background-color: #020617; }
+        .cyber-card { background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(255, 255, 255, 0.1); backdrop-filter: blur(12px); }
+    </style>
+</head>
+<body class="text-slate-300">
+
+    <div id="root" class="min-h-screen"></div>
+
+    <script>
+        const root = document.getElementById('root');
+        const SECURITY = { passkey: "889900", answer: "nivek ai" };
+
+        // --- NAVIGATION LOGIC ---
+        function router() {
+            const hash = window.location.hash;
+            if (hash === '#admin') {
+                showAdminLogin();
+            } else if (hash === '#dashboard') {
+                showDashboard();
+            } else {
+                showPlayer();
+            }
+        }
+
+        // --- 1. THE PLAYER VIEW ---
+        function showPlayer() {
+            root.className = "min-h-screen flex items-center justify-center p-6";
+            root.innerHTML = `
+                <div class="w-full max-w-md cyber-card rounded-3xl overflow-hidden shadow-2xl">
+                    <div class="p-4 bg-white/5 border-b border-white/5 flex justify-between items-center text-[10px] font-bold tracking-widest text-cyan-500">
+                        <div>NIVEK_UPLINK_v1.0</div>
+                        <div class="animate-pulse">● LIVE</div>
+                    </div>
+                    <div class="p-8">
+                        <div id="ad-box" class="aspect-video bg-black/60 rounded-2xl flex flex-col items-center justify-center border border-white/5 mb-8">
+                            <button onclick="runTimer()" class="group flex flex-col items-center gap-4">
+                                <div class="w-16 h-16 bg-white text-black rounded-full flex items-center justify-center text-xl group-hover:scale-110 transition-all shadow-lg">▶</div>
+                                <span class="text-[10px] font-black uppercase tracking-widest text-white italic">Initialize Extraction</span>
+                            </button>
+                        </div>
+                        <button id="claim-btn" disabled class="w-full py-4 bg-slate-800 text-slate-500 rounded-xl font-black uppercase italic tracking-widest cursor-not-allowed transition-all">
+                            Transmit Reward
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function runTimer() {
+            let time = 15;
+            const box = document.getElementById('ad-box');
+            const btn = document.getElementById('claim-btn');
+            
+            const itv = setInterval(() => {
+                time--;
+                box.innerHTML = `
+                    <div class="text-7xl font-light text-white italic tracking-tighter">${time}s</div>
+                    <div class="text-[9px] font-bold text-cyan-500 uppercase tracking-[0.3em] animate-pulse mt-2">Syncing Attention...</div>
+                `;
+                
+                if (time <= 0) {
+                    clearInterval(itv);
+                    box.innerHTML = `<div class="text-emerald-400 text-5xl">✓</div><div class="text-xs font-bold text-white uppercase mt-2">Verified</div>`;
+                    btn.disabled = false;
+                    btn.className = "w-full py-4 bg-cyan-500 text-white rounded-xl font-black uppercase italic tracking-widest shadow-lg shadow-cyan-500/20 hover:translate-y-[-2px]";
+                    btn.onclick = () => window.location.href = 'https://t.me/NivekAIBot';
+                }
+            }, 1000);
+        }
+
+        // --- 2. ADMIN LOGIN ---
+        function showAdminLogin() {
+            root.className = "min-h-screen flex items-center justify-center p-6";
+            root.innerHTML = `
+                <div class="w-full max-w-sm cyber-card p-10 rounded-3xl text-center">
+                    <div class="text-cyan-500 text-3xl mb-6">◈</div>
+                    <h2 class="text-white font-black uppercase tracking-widest text-sm mb-8">System Auth</h2>
+                    <input type="password" id="pass-input" placeholder="ENTER PASSKEY" class="w-full bg-black/50 border border-white/10 p-4 rounded-xl mb-4 text-white text-center outline-none focus:border-cyan-500">
+                    <button onclick="checkAuth()" class="w-full bg-cyan-600 text-white font-bold py-4 rounded-xl uppercase text-[10px] tracking-widest">Connect</button>
+                </div>
+            `;
+        }
+
+        function checkAuth() {
+            const val = document.getElementById('pass-input').value;
+            if (val === SECURITY.passkey || val.toLowerCase() === SECURITY.answer) {
+                window.location.hash = '#dashboard';
+            } else {
+                alert("ACCESS DENIED");
+            }
+        }
+
+        // --- 3. ADMIN DASHBOARD ---
+        function showDashboard() {
+            root.className = "min-h-screen flex";
+            root.innerHTML = `
+                <aside class="w-64 border-r border-white/5 p-8 flex flex-col gap-10 bg-black">
+                    <div class="font-black italic text-xl text-white">NIVEK<span class="text-cyan-500">_HUB</span></div>
+                    <nav class="space-y-4">
+                        <div class="text-cyan-400 text-[10px] font-bold uppercase tracking-widest">Intelligence</div>
+                        <div class="text-slate-500 text-[10px] font-bold uppercase tracking-widest">Intercom</div>
+                    </nav>
+                    <button onclick="window.location.hash=''" class="mt-auto text-[9px] uppercase opacity-50">Disconnect</button>
+                </aside>
+                <main class="flex-1 p-16">
+                    <h2 class="text-5xl font-black text-white italic uppercase tracking-tighter mb-12">Neural_Terminal</h2>
+                    <div class="grid grid-cols-2 gap-8">
+                        <div class="cyber-card p-8 rounded-3xl">
+                            <p class="text-[9px] text-slate-500 font-bold uppercase mb-4">Total Impressions</p>
+                            <p class="text-4xl text-white font-light tabular-nums">1,042</p>
+                        </div>
+                        <div class="cyber-card p-8 rounded-3xl">
+                            <p class="text-[9px] text-slate-500 font-bold uppercase mb-4">Est. Revenue</p>
+                            <p class="text-4xl text-emerald-500 font-light tabular-nums">$42.08</p>
+                        </div>
+                    </div>
+                </main>
+            `;
+        }
+
+        window.addEventListener('hashchange', router);
+        router(); // Initialize
+    </script>
+</body>
+</html>
