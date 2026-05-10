@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>NIVEK | AD_HUB_SYSTEM</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;500;700&family=Fira+Code:wght@400;500&display=swap');
+        body { font-family: 'Space Grotesk', sans-serif; background-color: #020617; color: #94a3b8; -webkit-tap-highlight-color: transparent; overflow-x: hidden; }
+        .cyber-card { background: rgba(15, 23, 42, 0.5); border: 1px solid rgba(255, 255, 255, 0.05); backdrop-filter: blur(12px); }
+        .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+        .active-nav { color: #22d3ee; border-bottom: 2px solid #22d3ee; }
+        /* Smooth transitions */
+        .fade-in { animation: fadeIn 0.3s ease-in; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        /* Ad Media Handling */
+        .ad-media-container { width: 100%; aspect-ratio: 16/9; background: #000; border-radius: 12px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1); }
+        .media-fit { width: 100%; height: 100%; object-fit: cover; }
+    </style>
+</head>
+<body>
+
+    <div id="root"></div>
+
+    <script>
+        // --- 1. CORE DATA STORAGE (MOCK BACKEND) ---
+        // In a real prod environment, these would be fetched from your database
+        const SYSTEM = {
+            admin: { passkey: "889900", question: "First bot name?", answer: "nivek ai" },
+            bots: [
+                { id: "nv_ai", name: "NIVEK AI", username: "NivekAIBot", status: "online" },
+                { id: "nv_hub", name: "AD HUB", username: "NivekAdHubBot", status: "online" }
+            ],
+            ads: [
+                { id: 1, type: "PAID", title: "Nivek Premium", desc: "Unlock all features with Pro subscription.", media: "https://images.unsplash.com/photo-1614850523296-d8c1af93d400?w=800", link: "#shop" },
+                { id: 2, type: "INTERNAL", title: "Join Support", desc: "Get instant help in our official group.", media: "https://images.unsplash.com/photo-1515378791036-0648a3ef77b2?w=800", link: "https://t.me/NivekSupport" }
+            ],
+            sessions: {}, // Format: { session_id: { uid, bot_id, status, reward, expires } }
+            wallet: { stars: 2450, external_usd: 124.50 },
+            subscriptions: { pro_24h: 10, pro_7d: 50, pro_30d: 150 }
+        };
+
+        // --- 2. VIRTUAL ROUTER ---
+        const state = { currentView: 'player', isTabActive: true };
+
+        function router() {
+            const params = new URLSearchParams(window.location.search);
+            const hash = window.location.hash;
+            const sessionId = params.get('session');
+
+            if (hash === '#admin') renderAdmin();
+            else if (hash === '#shop') renderShop();
+            else if (sessionId) renderAdPlayer(sessionId, params.get('bot'));
+            else renderLanding();
+        }
+
+        // --- 3. UI COMPONENTS ---
+
+        // LANDING / DIRECT USER ONBOARDING
+        function renderLanding() {
+            const root = document.getElementById('root');
+            root.innerHTML = `
+                <div class="min-h-screen p-6 flex flex-col items-center justify-center fade-in">
+                    <div class="text-center mb-8">
+                        <h1 class="text-4xl font-black text-white italic italic">NIVEK<span class="text-cyan-500 underline">_HUB</span></h1>
+                        <p class="text-[10px] uppercase tracking-[0.4em] mt-2 opacity-50">Central Neural Network</p>
+                    </div>
+                    <div class="grid grid-cols-1 gap-4 w-full max-w-sm">
+                        ${SYSTEM.bots.map(bot => `
+                            <div class="cyber-card p-6 rounded-3xl flex justify-between items-center">
+                                <div>
+                                    <p class="text-white font-bold uppercase text-xs">${bot.name}</p>
+                                    <p class="text-[9px] opacity-40">@${bot.username}</p>
+                                </div>
+                                <button onclick="window.location.href='https://t.me/${bot.username}'" class="bg-cyan-500/10 text-cyan-400 px-4 py-2 rounded-xl text-[10px] font-black uppercase">Open</button>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        // AD PLAYER (CORE FEATURE)
+        function renderAdPlayer(sessionId, botId) {
+            // Mock session creation if it doesn't exist
+            if (!SYSTEM.sessions[sessionId]) {
+                SYSTEM.sessions[sessionId] = { bot_id: botId, status: 'pending', timer: 20 };
+            }
+            
+            const ad = SYSTEM.ads[0]; // Logic would pick based on priority
+            const root = document.getElementById('root');
+            root.innerHTML = `
+                <div class="min-h-screen p-6 flex flex-col items-center justify-center fade-in">
+                    <div class="w-full max-w-md cyber-card rounded-[2.5rem] p-6 relative overflow-hidden">
+                        <div id="countdown" class="absolute top-8 right-8 z-10 bg-black/60 backdrop-blur-md px-3 py-1 rounded-full text-white font-mono text-sm border border-white/10">20s</div>
+                        
+                        <div class="ad-media-container mb-4">
+                            <img src="${ad.media}" class="media-fit" id="ad-media">
+                        </div>
+
+                        <h2 class="text-white font-bold text-lg uppercase italic tracking-tighter mb-1">${ad.title}</h2>
+                        <p class="text-xs text-slate-400 mb-6 leading-relaxed line-clamp-2">${ad.desc}</p>
+
+                        <div id="player-controls" class="space-y-3">
+                            <button onclick="window.open('${ad.link}')" class="w-full py-4 bg-white/5 border border-white/10 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest">Visit Advertiser</button>
+                            <button id="verify-btn" disabled class="w-full py-4 bg-slate-800 text-slate-600 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all">Verify Completion</button>
+                        </div>
+
+                        <div id="focus-alert" class="hidden absolute inset-0 bg-slate-950/95 flex flex-col items-center justify-center text-center p-6 z-50">
+                            <p class="text-rose-500 font-black uppercase italic mb-2">Attention Required</p>
+                            <p class="text-[10px] opacity-60">System paused. Return to this tab to resume reward extraction.</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            startTimer(sessionId);
+        }
+
+        function startTimer(sid) {
+            let time = SYSTEM.sessions[sid].timer;
+            const counter = document.getElementById('countdown');
+            const verifyBtn = document.getElementById('verify-btn');
+            const focusAlert = document.getElementById('focus-alert');
+
+            // Tab Visibility Logic
+            document.addEventListener('visibilitychange', () => {
+                state.isTabActive = !document.hidden;
+                focusAlert.classList.toggle('hidden', state.isTabActive);
+            });
+
+            const itv = setInterval(() => {
+                if (state.isTabActive) {
+                    time--;
+                    counter.innerText = time + "s";
+                    if (time <= 0) {
+                        clearInterval(itv);
+                        SYSTEM.sessions[sid].status = 'completed';
+                        verifyBtn.disabled = false;
+                        verifyBtn.className = "w-full py-4 bg-cyan-500 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-cyan-500/30";
+                        verifyBtn.onclick = () => {
+                            SYSTEM.sessions[sid].status = 'used';
+                            const bot = SYSTEM.bots.find(b => b.id === SYSTEM.sessions[sid].bot_id) || {username: 'NivekAdHubBot'};
+                            window.location.href = `https://t.me/${bot.username}?start=reward_${sid}`;
+                        };
+                    }
+                }
+            }, 1000);
+        }
+
+        // SHOP SYSTEM
+        function renderShop() {
+            const root = document.getElementById('root');
+            root.innerHTML = `
+                <div class="min-h-screen p-6 fade-in">
+                    <div class="flex justify-between items-center mb-10">
+                        <h1 class="text-3xl font-black text-white italic uppercase tracking-tighter">Nexus_Shop</h1>
+                        <button onclick="window.location.hash=''" class="text-[10px] font-bold uppercase opacity-50">Close</button>
+                    </div>
+                    <div class="space-y-4">
+                        <div class="cyber-card p-6 rounded-3xl border-cyan-500/20 bg-gradient-to-br from-cyan-500/5 to-transparent">
+                            <p class="text-[9px] font-black text-cyan-500 uppercase tracking-widest mb-2">Pro Subscription</p>
+                            <h3 class="text-white font-bold text-xl mb-4">Ad-Free Experience</h3>
+                            <div class="grid grid-cols-3 gap-2 mb-6">
+                                <button class="bg-white/5 border border-white/10 p-3 rounded-xl text-center"><p class="text-[8px] opacity-40">24H</p><p class="text-white font-bold text-xs">10⭐</p></button>
+                                <button class="bg-cyan-500/10 border border-cyan-500/30 p-3 rounded-xl text-center"><p class="text-[8px] text-cyan-500">7D</p><p class="text-white font-bold text-xs">50⭐</p></button>
+                                <button class="bg-white/5 border border-white/10 p-3 rounded-xl text-center"><p class="text-[8px] opacity-40">30D</p><p class="text-white font-bold text-xs">150⭐</p></button>
+                            </div>
+                            <button class="w-full py-4 bg-cyan-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest">Purchase with Stars</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // ADMIN DASHBOARD
+        function renderAdmin() {
+            const root = document.getElementById('root');
+            // Simplified Login Check
+            root.innerHTML = `
+                <div class="min-h-screen p-6 fade-in">
+                    <header class="flex justify-between items-center mb-8">
+                        <div>
+                            <h2 class="text-2xl font-black text-white italic uppercase">Terminal</h2>
+                            <p class="text-[8px] text-cyan-500 font-bold uppercase tracking-widest">Encrypted Session</p>
+                        </div>
+                        <button onclick="window.location.hash=''" class="bg-white/5 p-3 rounded-full">✕</button>
+                    </header>
+
+                    <div class="grid grid-cols-2 gap-3 mb-6">
+                        <div class="cyber-card p-4 rounded-2xl"><p class="text-[8px] uppercase font-bold text-slate-500">Reserve</p><p class="text-xl text-white font-light">${SYSTEM.wallet.stars}⭐</p></div>
+                        <div class="cyber-card p-4 rounded-2xl"><p class="text-[8px] uppercase font-bold text-slate-500">Revenue</p><p class="text-xl text-emerald-400 font-light">$${SYSTEM.wallet.external_usd}</p></div>
+                    </div>
+
+                    <div class="space-y-4">
+                        <h3 class="text-[10px] font-black uppercase tracking-[0.2em] text-white/40">Management</h3>
+                        <div class="cyber-card p-4 rounded-2xl flex justify-between items-center">
+                            <span class="text-xs font-bold text-white uppercase">Bot Ecosystem</span>
+                            <span class="text-[10px] text-cyan-500 font-mono">${SYSTEM.bots.length} Active</span>
+                        </div>
+                        <div class="cyber-card p-4 rounded-2xl flex justify-between items-center">
+                            <span class="text-xs font-bold text-white uppercase">Pending Ads</span>
+                            <span class="text-[10px] text-emerald-500 font-mono">3 New</span>
+                        </div>
+                        <div class="cyber-card p-4 rounded-2xl flex justify-between items-center" onclick="alert('Promo Generator Active')">
+                            <span class="text-xs font-bold text-white uppercase">Forge Promo</span>
+                            <span class="text-xl">➔</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        window.addEventListener('hashchange', router);
+        window.addEventListener('load', router);
+
+    </script>
+</body>
+</html>
